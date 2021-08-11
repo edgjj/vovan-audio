@@ -14,18 +14,18 @@
 #include <iostream>
 #include <random>
 #include <ctime>
+
 class pull_random final : public bot::command::base
 {
-	void execute (const vk::event::message_new& event) const override
+public:
+	pull_random() : bot::command::base (1) { ; }
+	void execute (const vk::event::message_new& event, const std::vector<std::string>& args) const override
 	{
 		std::mt19937 gener(std::time(0));
-		std::uniform_int_distribution<int> distr(0, 1337);
+		std::uniform_int_distribution<int> distr(0, std::stoi(args[0]));
 		int r = distr(gener);
-		vk::method::messages::send(event.peer_id(), std::to_string (r), false);
+		vk::method::messages::send(event.peer_id(), std::to_string (r));
 	}
-
-private:
-	
 };
 
 int main(int argc, char* argv[])
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 	}
 
 	vk::config::load(argv[1]);
-    vk::log_level::info();
+    vk::log_level::trace();
 
 	asio::io_context ctx;
     vk::long_poll api (ctx);
@@ -46,8 +46,8 @@ int main(int argc, char* argv[])
     spdlog::info("workers: {}", vk::config::num_workers());
 
 	bot::message_handler msg_handler{};
-	msg_handler.on_command<pull_random> ("/рандом");
-
+	msg_handler.on_command<pull_random> ("рандом");
+	msg_handler.set_prefix ("вован", "старый");
     while (true) {
         auto events = api.listen(data);
 

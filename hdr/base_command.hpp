@@ -13,8 +13,12 @@ namespace command {
 class base
 {
 public:
-    virtual void execute(const vk::event::message_new& event) const = 0;
+    base(int arg_cnt) : expected_args (arg_cnt) { ; }
+    virtual void execute(const vk::event::message_new& event, const std::vector<std::string>& args) const = 0; 
+    size_t get_expected_args() { return expected_args; }
     virtual ~base() = default;
+protected:
+    size_t expected_args;
 };
 
 }// namespace command
