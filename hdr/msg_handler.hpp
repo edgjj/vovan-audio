@@ -2,6 +2,7 @@
 #define VOVAN_MSG_HANDLER_H
 
 #include <spdlog/spdlog.h>
+#include <vk/include/methods/basic.hpp>
 #include <vk/include/events/message_new.hpp>
 #include "base_command.hpp"
 
@@ -36,7 +37,8 @@ public:
         std::vector<std::string> args (tokens.begin() + 1 + has_pfx, tokens.end());
         
         auto cmd = m_commands.at(tokens[has_pfx]);
-        if (args.size() < cmd->get_expected_args())
+
+        if (!cmd->is_variable_args() && args.size() < cmd->get_expected_args())
             vk::method::messages::send(event.peer_id(), "Not enough arguments.");
         else
             cmd->execute(event, args);    
@@ -48,6 +50,14 @@ public:
         m_commands.emplace(trigger, std::make_unique<Handler>());
         return *this;
     }
+
+    template <typename Handler>
+    message_handler& on_command (std::string_view trigger, Handler& handler)
+    {
+        m_commands[trigger.data()] = std::move (handler);
+        return *this;
+    }
+
     template <typename... Prefixes>
     void set_prefix(Prefixes... pfx)
     {

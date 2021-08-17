@@ -1,64 +1,71 @@
-
+#include <cmath>
+#include <iostream>
+#include <runtime/include/net/network.hpp>
 #include <vk/include/config/loader.hpp>
-#include <vk/include/log_level.hpp>
-
-#include <vk/include/long_poll/api.hpp>
-#include <vk/include/events/message_new.hpp>
+#include <vk/include/long_poll/long_poll.hpp>
 #include <vk/include/methods/basic.hpp>
-#include <vk/include/methods/utility/message_constructor.hpp>
-#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-
+#include <vk/include/setup_logger.hpp>
 
 #include "../hdr/msg_handler.hpp"
-#include <iostream>
-#include <random>
-#include <ctime>
+#include "../hdr/dsp.hpp"
 
-class pull_random final : public bot::command::base
+class tanh_processor : public bot::command::base_dsp
 {
 public:
-	pull_random() : bot::command::base (1) { ; }
-	void execute (const vk::event::message_new& event, const std::vector<std::string>& args) const override
-	{
-		std::mt19937 gener(std::time(0));
-		std::uniform_int_distribution<int> distr(0, std::stoi(args[0]));
-		int r = distr(gener);
-		vk::method::messages::send(event.peer_id(), std::to_string (r));
-	}
+    tanh_processor() : bot::command::base_dsp (1) { ; }
+    void execute(std::vector<float>& buf, const std::vector<float>& params) const override
+    {
+        for (auto& i : buf)
+            i = std::tanh(params[0] * i);
+    }
 };
 
 int main(int argc, char* argv[])
 {
-	if (argc != 2)
-	{
-		std::cerr << "Missing config path as argument." << std::endl;
-		return -1;
-	}
+    if (argc != 2)
+    {
+        std::cerr << "Missing config path as argument." << std::endl;
+        return -1;
+    }
 
-	vk::config::load(argv[1]);
-    vk::log_level::trace();
+    vk::config::load(argv[1]);
+    vk::setup_logger("trace");
 
-	asio::io_context ctx;
-    vk::long_poll api (ctx);
-    vk::long_poll_data data = api.server();
+    asio::io_context ctx;
+    vk::long_poll api(ctx);
 
     spdlog::info("workers: {}", vk::config::num_workers());
 
-	bot::message_handler msg_handler{};
-	msg_handler.on_command<pull_random> ("рандом");
-	msg_handler.set_prefix ("вован", "старый");
-    while (true) {
-        auto events = api.listen(data);
+    bot::message_handler msg_handler{};
 
-        for (auto& event : events) {
+    bot::dsp_voice_processor dsp_processor{};
+    dsp_processor.on_command_dsp<tanh_processor>("tanh");
+
+    std::unique_ptr <bot::command::base> dsp_base;
+    dsp_base.reset ( &dsp_processor );
+
+    msg_handler.on_command("dsp", dsp_base );
+    msg_handler.set_prefix("вован", "старый");
+
+    while (true)
+    {
+        auto events = api.listen();
+
+        for (auto& event : events)
+        {
             api.on_event("message_new", event, [&event, &msg_handler] {
                 vk::event::message_new message_event = event.get_message_new();
-                msg_handler.process(std::forward<vk::event::message_new> (message_event));
+                try
+                {
+                    msg_handler.process(std::move(message_event));
+                } catch (std::exception& e)
+                {
+                    spdlog::error("Exception: {}", e.what());
+                }
             });
         }
         api.run();
     }
-	
-	return EXIT_SUCCESS;
+
+    return EXIT_SUCCESS;
 }

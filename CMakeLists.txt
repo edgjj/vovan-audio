@@ -24,7 +24,8 @@ add_executable(vovan-audio ${SRC})
 
 include_directories(modules/cpp_vk_lib/cpp_vk_lib)
 include_directories(modules/cpp_vk_lib/modules/spdlog/include)
+include_directories(modules/cpp_vk_lib/modules/simdjson/include)
 include_directories(modules/cpp_vk_lib/modules/asio/asio/include)
 
-
-target_link_libraries(vovan-audio PRIVATE cpp_vk_lib curlpp)
+target_include_directories(vovan-audio PUBLIC /usr/include/opus)
+target_link_libraries(vovan-audio PRIVATE cpp_vk_lib simdjson opus opusfile opusenc)

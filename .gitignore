@@ -1,5 +1,8 @@
 doc/
 build/
+.idea/
+cmake-build-debug/
+cmake-build-release/
 .vscode/
 !CMakeLists.txt
 !*.cpp
