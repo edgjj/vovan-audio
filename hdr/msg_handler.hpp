@@ -10,8 +10,36 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <random>
 
 namespace bot {
+
+template <const char* str>
+class string_cmd : public command::base
+{
+public:
+    void execute(const vk::event::message_new& event, const std::vector<std::string>& args) const override
+    {
+        vk::method::messages::send(event.peer_id(), str);
+    }
+};
+
+template <size_t N, const std::array<const char*, N>  & arr>
+class random_string_cmd : public command::base
+{
+public:
+    random_string_cmd() : engine ( std::random_device ()() )
+    {}
+
+    void execute(const vk::event::message_new& event, const std::vector<std::string>& args) const override
+    {
+        std::uniform_int_distribution<int> distribution(0, N - 1);
+        vk::method::messages::send(event.peer_id(), arr[distribution(engine)]);
+    }
+
+private:
+    mutable std::mt19937 engine;
+};
 
 class message_handler
 {
@@ -48,6 +76,20 @@ public:
     message_handler& on_command(std::string_view trigger)
     {
         m_commands.emplace(trigger, std::make_unique<Handler>());
+        return *this;
+    }
+
+    template <const char* str>
+    message_handler& on_command(std::string_view trigger)
+    {
+        m_commands.emplace(trigger, std::make_unique<string_cmd<str>>());
+        return *this;
+    }
+
+    template <size_t N, const std::array<const char*, N> & arr>
+    message_handler& on_command(std::string_view trigger)
+    {
+        m_commands.emplace(trigger, std::make_unique<random_string_cmd<N, arr>>());
         return *this;
     }
 

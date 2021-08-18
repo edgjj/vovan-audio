@@ -8,6 +8,8 @@
 
 #include "../hdr/msg_handler.hpp"
 #include "../hdr/dsp.hpp"
+#include "../hdr/premade_text.hpp"
+#include "../hdr/long_poller.hpp"
 
 class tanh_processor : public bot::command::base_dsp
 {
@@ -30,13 +32,12 @@ int main(int argc, char* argv[])
 
     vk::config::load(argv[1]);
     vk::setup_logger("trace");
-
-    asio::io_context ctx;
-    vk::long_poll api(ctx);
-
     spdlog::info("workers: {}", vk::config::num_workers());
+    asio::io_context io_ctx;
+    bot::long_poller lp_handler (io_ctx);
 
-    bot::message_handler msg_handler{};
+    lp_handler.get_message_handler()
+        .set_prefix("вован", "старый");
 
     bot::dsp_voice_processor dsp_processor{};
     dsp_processor.on_command_dsp<tanh_processor>("tanh");
@@ -44,28 +45,14 @@ int main(int argc, char* argv[])
     std::unique_ptr <bot::command::base> dsp_base;
     dsp_base.reset ( &dsp_processor );
 
-    msg_handler.on_command("dsp", dsp_base );
-    msg_handler.set_prefix("вован", "старый");
+    lp_handler.get_message_handler()
+        .on_command("dsp", dsp_base)
+        .on_command<bot::premade_binary_data::help_string>("помощь")
+        .on_command<bot::premade_binary_data::legend_1>("легенда")
+        .on_command<bot::premade_binary_data::legend_2>("легенда2")
+        .on_command<bot::premade_binary_data::snus.size(), bot::premade_binary_data::snus>("фильм")
+        .on_command<bot::premade_binary_data::rubrics.size(), bot::premade_binary_data::rubrics>("рубрика")
+        .on_command<bot::premade_binary_data::quotes.size(), bot::premade_binary_data::quotes>("цитата");
 
-    while (true)
-    {
-        auto events = api.listen();
-
-        for (auto& event : events)
-        {
-            api.on_event("message_new", event, [&event, &msg_handler] {
-                vk::event::message_new message_event = event.get_message_new();
-                try
-                {
-                    msg_handler.process(std::move(message_event));
-                } catch (std::exception& e)
-                {
-                    spdlog::error("Exception: {}", e.what());
-                }
-            });
-        }
-        api.run();
-    }
-
-    return EXIT_SUCCESS;
+    return lp_handler.run();
 }

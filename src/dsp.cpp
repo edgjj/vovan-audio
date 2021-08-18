@@ -11,8 +11,6 @@
 
 namespace bot {
 
-
-
 void dsp_voice_processor::execute(const vk::event::message_new& event, const std::vector<std::string>& args) const
 {
     if (m_commands.find(args[0]) == m_commands.end())
