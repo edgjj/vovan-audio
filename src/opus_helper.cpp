@@ -7,7 +7,7 @@ namespace helpers
 {
 struct cpp_opus_mem_stream
 {
-    const std::vector<char>& buf;
+    const std::vector<uint8_t>& buf;
     std::ptrdiff_t pos;
 };
 
@@ -75,7 +75,7 @@ static opus_int64 dec_tell_callback(void *_stream)
 
 static int enc_write_callback(void* _stream, const unsigned char* ptr, opus_int32 len)
 {
-    std::vector<char>* data = reinterpret_cast<std::vector<char>*>(_stream);
+    std::vector<uint8_t>* data = reinterpret_cast<std::vector<uint8_t>*>(_stream);
     data->insert(data->end(), ptr, ptr + len);
     return false;
 }
@@ -87,7 +87,7 @@ static int enc_read_callback(void* user_data)
 
 using opus_exception = std::runtime_error;
 
-cpp_ogg_opus_decoder::cpp_ogg_opus_decoder(const std::vector<char>& data)
+cpp_ogg_opus_decoder::cpp_ogg_opus_decoder(const std::vector<uint8_t>& data)
 {
     OpusFileCallbacks cb = { dec_read_callback, dec_seek_callback, dec_tell_callback, NULL};
     cpp_opus_mem_stream mem_stream = { data, 0 };
@@ -146,7 +146,7 @@ std::string cpp_ogg_opus_decoder::decode_error(const int& err_code)
     }
 }
 
-cpp_ogg_opus_encoder::cpp_ogg_opus_encoder(std::vector<char>& buffer)
+cpp_ogg_opus_encoder::cpp_ogg_opus_encoder(std::vector<uint8_t>& buffer)
 {
     opus_enc_impl.reset ( new _cpp_ogg_opus_encoder() );
 

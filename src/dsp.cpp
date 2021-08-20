@@ -46,8 +46,8 @@ void dsp_voice_processor::execute(const vk::event::message_new& event, const std
 
         auto audio_message = vk::attachment::cast<vk::attachment::audio_message>(attachment);
 
-        std::vector<char> audio;
-        if (runtime::network::download(&audio, audio_message->raw_ogg()) == 0)
+        std::vector<uint8_t> audio;
+        if (runtime::network::download(audio, audio_message->raw_ogg()) == 0)
         {
             int error = 0;
 

@@ -6,13 +6,14 @@
 
 #include <vector>
 #include <memory>
+#include <cstdint>
 
 namespace helpers
 {
 class cpp_ogg_opus_decoder
 {
 public:
-    cpp_ogg_opus_decoder(const std::vector<char>& data);
+    cpp_ogg_opus_decoder(const std::vector<uint8_t>& data);
 
     void perform_decode(std::vector<float>& buffer);
 private:
@@ -31,7 +32,7 @@ private:
 class cpp_ogg_opus_encoder
 {
 public:
-    cpp_ogg_opus_encoder(std::vector<char>& buffer);
+    cpp_ogg_opus_encoder(std::vector<uint8_t>& buffer);
 
     void set_option (const int& request, const int& value);
     void perform_encode(const std::vector<float>& buffer);
