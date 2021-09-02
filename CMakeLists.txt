@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(vovan-audio DESCRIPTION "C++ vk bot" LANGUAGES CXX)
 
+add_subdirectory("modules/cpp_vk_lib")
+
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../build)
 set(EXECUTABLE_OUTPUT_PATH ../build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../build)
@@ -16,16 +18,16 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 file(GLOB_RECURSE SRC "hdr/*.hpp" "src/*.cpp")
 
-add_subdirectory(modules/cpp_vk_lib)
-
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -O2")
 
 add_executable(vovan-audio ${SRC})
 
-include_directories(modules/cpp_vk_lib/cpp_vk_lib)
+include_directories(modules/cpp_vk_lib/cpp_vk_lib/include)
 include_directories(modules/cpp_vk_lib/modules/spdlog/include)
 include_directories(modules/cpp_vk_lib/modules/simdjson/include)
 include_directories(modules/cpp_vk_lib/modules/asio/asio/include)
 
 target_include_directories(vovan-audio PUBLIC /usr/include/opus)
-target_link_libraries(vovan-audio PRIVATE cpp_vk_lib simdjson opus opusfile opusenc)
+
+target_link_libraries(vovan-audio PRIVATE simdjson opus opusfile opusenc)
+target_link_libraries(vovan-audio PUBLIC cpp_vk_lib)

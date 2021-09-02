@@ -1,12 +1,12 @@
 #include "../hdr/dsp.hpp"
 #include "../hdr/opus_helper.hpp"
 
-#include <runtime/include/net/network.hpp>
+#include <cpp_vk_lib/runtime/net/network.hpp>
 #include <simdjson.h>
 #include <vector>
-#include <vk/include/methods/basic.hpp>
-#include <vk/include/methods/utility/constructor.hpp>
-#include <vk/include/events/message_new.hpp>
+#include <cpp_vk_lib/vk/methods/basic.hpp>
+#include <cpp_vk_lib/vk/methods/constructor.hpp>
+#include <cpp_vk_lib/vk/events/message_new.hpp>
 
 
 namespace bot {
@@ -43,8 +43,7 @@ void dsp_voice_processor::execute(const vk::event::message_new& event, const std
         {
             continue;
         }
-
-        auto audio_message = vk::attachment::cast<vk::attachment::audio_message>(attachment);
+        auto audio_message = static_cast <vk::attachment::audio_message*> (attachment.get());
 
         std::vector<uint8_t> audio;
         if (runtime::network::download(audio, audio_message->raw_ogg()) == 0)
@@ -72,9 +71,9 @@ void dsp_voice_processor::execute(const vk::event::message_new& event, const std
                                   .param("type", "audio_message")
                                   .perform_request();
 
-            std::string res2 = runtime::network::upload("file", audio, p.parse(res)["response"]["upload_url"]);
+            auto res2 = runtime::network::upload(true, audio, "file", p.parse(res)["response"]["upload_url"]);
 
-            std::string res3 = vk::method::group_constructor().method("docs.save").param("file", p.parse(res2)["file"]).perform_request();
+            std::string res3 = vk::method::group_constructor().method("docs.save").param("file", p.parse(res2.value())["file"]).perform_request();
 
             simdjson::dom::element parsed3 = p.parse(res3)["response"]["audio_message"];
 
@@ -82,7 +81,7 @@ void dsp_voice_processor::execute(const vk::event::message_new& event, const std
             vec.push_back(vk::attachment::attachment_ptr_t(
                 new vk::attachment::document(parsed3["owner_id"].get_int64().value(), parsed3["id"].get_int64().value(), "")));
 
-            vk::method::messages::send(event.peer_id(), "", vec);
+            vk::method::messages::send(event.peer_id(), "", std::move (vec) );
         }
     }
 }

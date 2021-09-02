@@ -51,6 +51,7 @@ private:
         {
             ope_encoder_destroy(st->enc);
             ope_comments_destroy(st->comments);
+            delete st;
         }
     };
     std::unique_ptr<_cpp_ogg_opus_encoder, ogg_opus_enc_deleter> opus_enc_impl;

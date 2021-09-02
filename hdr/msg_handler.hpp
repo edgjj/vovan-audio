@@ -2,8 +2,8 @@
 #define VOVAN_MSG_HANDLER_H
 
 #include <spdlog/spdlog.h>
-#include <vk/include/methods/basic.hpp>
-#include <vk/include/events/message_new.hpp>
+#include <cpp_vk_lib/vk/methods/basic.hpp>
+#include <cpp_vk_lib/vk/events/message_new.hpp>
 #include "base_command.hpp"
 
 #include <string_view>

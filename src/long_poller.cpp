@@ -9,24 +9,26 @@ bot::message_handler& bot::long_poller::get_message_handler() noexcept
     return message_handler_;
 }
 
-int bot::long_poller::run()
+void bot::long_poller::run()
 {
-    while (true)
-    {
-        auto events = lp_.listen(60);
-
-        for (auto& event : events)
+    auto msg_new_cb = [this] (const vk::event::common& event) {
+        try
         {
-            lp_.on_event("message_new", event, [this, &event] {
-                try
-                {
-                    message_handler_.process(event.get_message_new());
-                } catch (std::exception& e)
-                {
-                    spdlog::error("Exception: {}", e.what());
-                }
-            });
+            message_handler_.process(event.get_message_new());
+        } catch (std::exception& e)
+        {
+            spdlog::error("Exception [message_handler]: {}", e.what());
         }
+    };
+    lp_.on_event (vk::event::type::message_new, msg_new_cb);
+
+    try
+    {
         lp_.run();
     }
+    catch (std::exception& e)
+    {
+        spdlog::trace ("Exception [long_poller]: {}", e.what());
+    }
+
 }

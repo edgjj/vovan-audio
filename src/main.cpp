@@ -1,10 +1,10 @@
 #include <cmath>
 #include <iostream>
-#include <runtime/include/net/network.hpp>
-#include <vk/include/config/loader.hpp>
-#include <vk/include/long_poll/long_poll.hpp>
-#include <vk/include/methods/basic.hpp>
-#include <vk/include/setup_logger.hpp>
+#include <cpp_vk_lib/runtime/net/network.hpp>
+#include <cpp_vk_lib/vk/config/config.hpp>
+#include <cpp_vk_lib/vk/long_poll/long_poll.hpp>
+#include <cpp_vk_lib/vk/methods/basic.hpp>
+#include <cpp_vk_lib/runtime/setup_logger.hpp>
 
 #include "../hdr/msg_handler.hpp"
 #include "../hdr/dsp.hpp"
@@ -31,7 +31,8 @@ int main(int argc, char* argv[])
     }
 
     vk::config::load(argv[1]);
-    vk::setup_logger("trace");
+
+    runtime::setup_logger(spdlog::level::level_enum::trace);
     spdlog::info("workers: {}", vk::config::num_workers());
     asio::io_context io_ctx;
     bot::long_poller lp_handler (io_ctx);
@@ -54,5 +55,7 @@ int main(int argc, char* argv[])
         .on_command<bot::premade_binary_data::rubrics.size(), bot::premade_binary_data::rubrics>("рубрика")
         .on_command<bot::premade_binary_data::quotes.size(), bot::premade_binary_data::quotes>("цитата");
 
-    return lp_handler.run();
+    lp_handler.run();
+
+    return 0;
 }
